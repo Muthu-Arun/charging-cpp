@@ -19,6 +19,7 @@ namespace Db {
     private:
         sqlite3_stmt* stmt;
     public:
+        Stmt() = default;
         Stmt(const char* query, Sqlite& db);
         ~Stmt();
         sqlite3_stmt* get();

@@ -1,6 +1,10 @@
 #include "utils/validate.h"
 #include "db/db.h"
+#include "jwt-cpp/jwt.h"
 #include "utils/hash.h"
+static const std::string JWT_SECRET = std::getenv("JWT_SECRET")
+                                          ? std::getenv("JWT_SECRET")
+                                          : "TheSecretKeyInDevlopment";
 namespace Validate {
 long get_userid_from_request(const crow::request &req) {
     auto authorization_header = req.get_header_value("Authorization");
@@ -24,17 +28,17 @@ long get_userid_from_request(const crow::request &req) {
 long validate_user(const std::string &username, const std::string &password) {
     // Validate and return user ID if valid, else return -1
 
-    Insert::Sqlite db(Insert::DB::userdb_name);
-    Insert::Stmt stmt;
+    Db::Sqlite db(Db::DatabaseFile);
+    Db::Stmt stmt;
     constexpr static const char *query_email =
         "SELECT id, password FROM user where email = ?";
     constexpr static const char *query =
         "SELECT id, password FROM user WHERE username = ?"; // AND password =
                                                             // ?";
     if (username.find('@') == std::string::npos)
-        stmt = Insert::Stmt(query, db);
+        stmt = Db::Stmt(query, db);
     else
-        stmt = Insert::Stmt(query_email, db);
+        stmt = Db::Stmt(query_email, db);
     sqlite3_bind_text(stmt.get(), 1, username.c_str(), -1, nullptr);
     int rc = sqlite3_step(stmt.get());
     if (rc == SQLITE_ROW) {
