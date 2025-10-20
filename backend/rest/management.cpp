@@ -1,0 +1,79 @@
+#include "rest/management.h"
+#include "crow/http_response.h"
+#include "crow/json.h"
+#include "db/db.h"
+namespace Management {
+Station::Station(std::string_view name, std::string_view location)
+    : id(-1), name(name), location(location) {}
+Outlet::Outlet(int station_id, std::string_view name, std::string_view status)
+    : id(-1), station_id(station_id), name(name), status(status) {}
+User::User(std::string_view name, std::string_view email,
+           std::string_view password)
+    : id(-1), name(name), email(email), password(password) {}
+
+crow::response add_station(const crow::request &req) {
+    crow::json::rvalue body = crow::json::load(req.body);
+    if (!body || !body.has("name") || !body.has("location")) {
+        return crow::response(400, "Invalid request body");
+    }
+    const std::string name = body["name"].s();
+    const std::string location = body["location"].s();
+    constexpr const char *query =
+        "INSERT INTO station (name, location) VALUES (?, ?)";
+    Db::Sqlite db(Db::DatabaseFile);
+    Db::Stmt stmt(query, db);
+    sqlite3_bind_text(stmt.get(), 1, name.c_str(), -1, nullptr);
+    sqlite3_bind_text(stmt.get(), 2, location.c_str(), -1, nullptr);
+    if (sqlite3_step(stmt.get()) != SQLITE_DONE) {
+        return crow::response(500, "Failed to add station");
+    }
+
+    return crow::response(201, "Station added successfully");
+}
+crow::response add_outlet(const crow::request &req) {
+    crow::json::rvalue body = crow::json::load(req.body);
+    if (!body || !body.has("station_id") || !body.has("name")) {
+        return crow::response(400, "Invalid request body");
+    }
+    const int station_id = body["station_id"].i();
+    const std::string name = body["name"].s();
+    const std::string status = "available";
+    constexpr const char *query =
+        "INSERT INTO outlet (station_id, name, status) VALUES (?, ?, ?)";
+    Db::Sqlite db(Db::DatabaseFile);
+    Db::Stmt stmt(query, db);
+    sqlite3_bind_int(stmt.get(), 1, station_id);
+    sqlite3_bind_text(stmt.get(), 2, name.c_str(), -1, nullptr);
+    sqlite3_bind_text(stmt.get(), 3, status.c_str(), -1, nullptr);
+    if (sqlite3_step(stmt.get()) != SQLITE_DONE) {
+        return crow::response(500, "Failed to add outlet");
+    }
+    return crow::response(201, "Outlet added successfully");
+}
+crow::response add_user(const crow::request &req) {
+    crow::json::rvalue body = crow::json::load(req.body);
+    if (!body || !body.has("name") || !body.has("email") ||
+        !body.has("password")) {
+        return crow::response(400, "Invalid request body");
+    }
+    const std::string name = body["name"].s();
+    const std::string email = body["email"].s();
+    const std::string password = body["password"].s();
+    constexpr const char *query =
+        "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
+    Db::Sqlite db(Db::DatabaseFile);
+    Db::Stmt stmt(query, db);
+    sqlite3_bind_text(stmt.get(), 1, name.c_str(), -1, nullptr);
+    sqlite3_bind_text(stmt.get(), 2, email.c_str(), -1, nullptr);
+    sqlite3_bind_text(stmt.get(), 3, password.c_str(), -1, nullptr);
+    if (sqlite3_step(stmt.get()) != SQLITE_DONE) {
+        return crow::response(500, "Failed to add user");
+    }
+    return crow::response(201, "User added successfully");
+}
+
+crow::response health_check(const crow::request &req) {
+    return crow::response(200, "Service is healthy");
+}
+
+} // namespace Management
