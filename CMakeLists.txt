@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(OpenSSL REQUIRED)
 include_directories(backend/ vendor/crow/ vendor/asio/ vendor/jwt/)
-add_executable(charging backend/main.cpp backend/db/db.cpp backend/utils/validate.cpp backend/utils/hash.cpp backend/rest/management.cpp)
+add_executable(charging backend/main.cpp backend/db/db.cpp backend/utils/validate.cpp backend/utils/hash.cpp backend/rest/management.cpp backend/rest/charging.cpp)
 target_compile_options(charging PRIVATE
     -Wall
     -Wextra

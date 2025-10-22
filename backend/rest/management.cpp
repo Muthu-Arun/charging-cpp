@@ -72,6 +72,44 @@ crow::response add_user(const crow::request &req) {
     return crow::response(201, "User added successfully");
 }
 
+crow::response get_stations(const crow::request &req) {
+    constexpr const char *query = "SELECT id, name, location FROM station";
+    Db::Sqlite db(Db::DatabaseFile);
+    Db::Stmt stmt(query, db);
+    crow::json::wvalue::list result_list;
+    crow::json::wvalue result;
+    while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
+        crow::json::wvalue station;
+        station["id"] = sqlite3_column_int(stmt.get(), 0);
+        station["name"] =
+            reinterpret_cast<const char *>(sqlite3_column_text(stmt.get(), 1));
+        station["location"] =
+            reinterpret_cast<const char *>(sqlite3_column_text(stmt.get(), 2));
+        result_list.push_back(station);
+    }
+    result["stations"] = std::move(result_list);
+    return crow::response(200, result);
+}
+crow::response get_outlets(const crow::request &req) {
+    constexpr const char *query =
+        "SELECT id, station_id, name, status FROM outlet";
+    Db::Sqlite db(Db::DatabaseFile);
+    Db::Stmt stmt(query, db);
+    crow::json::wvalue::list result_list;
+    crow::json::wvalue result;
+    while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
+        crow::json::wvalue outlet;
+        outlet["id"] = sqlite3_column_int(stmt.get(), 0);
+        outlet["station_id"] = sqlite3_column_int(stmt.get(), 1);
+        outlet["name"] =
+            reinterpret_cast<const char *>(sqlite3_column_text(stmt.get(), 2));
+        outlet["status"] =
+            reinterpret_cast<const char *>(sqlite3_column_text(stmt.get(), 3));
+        result_list.push_back(outlet);
+    }
+    result["outlets"] = std::move(result_list);
+    return crow::response(200, result);
+}
 crow::response health_check(const crow::request &req) {
     return crow::response(200, "Service is healthy");
 }
