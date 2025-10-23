@@ -7,4 +7,4 @@ COPY . .
 
 RUN  rm -r build/* && cd build && cmake .. && cd .. && cmake --build build --config Release -- -j 2 && rm -r database
 
-CMD ["./build/bit"]
+CMD ["./build/charging"]
