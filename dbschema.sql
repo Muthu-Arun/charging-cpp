@@ -1,3 +1,4 @@
 CREATE TABLE outlet(id integer primary key autoincrement, name varchar, station_id integer, status varchar, foreign key(station_id) references station(id));
 CREATE TABLE user(id integer primary key autoincrement, name varchar, email varchar, password varchar);
 CREATE TABLE station(id integer primary key autoincrement, name varchar, location varchar);
+CREATE TABLE session(id integer primary key autoincrement, user_id integer not null, outlet_id integer not null, energy float, start_time text default CURRENT_TIMESTAMP , end_time text default "ongoing", foreign key(user_id) references user(id), foreign key(outlet_id) references outlet(id));

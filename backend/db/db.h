@@ -2,7 +2,9 @@
 #include "sqlite3.h"
 
 namespace Db {
-    inline const char *DatabaseFile = "database/user.db";
+    // inline const char *DatabaseFile = "database/user.db";
+    //TO be used with debugger
+    inline const char *DatabaseFile = "/workspaces/charging/charging-cpp/database/user.db";
     struct Sqlite{
     private:
         sqlite3* db;
