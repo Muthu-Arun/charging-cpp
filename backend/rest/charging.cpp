@@ -72,4 +72,26 @@ crow::response terminate_charge(const crow::request &req) {
     }
     return crow::response(crow::OK, "Charging terminated successfully");
 }
+crow::response get_outlet_status(const crow::request &req) {
+    crow::json::rvalue body = crow::json::load(req.body);
+    if (!body || !body.has("outlet_id")) {
+        return crow::response(crow::BAD_REQUEST, "Invalid request body");
+    }
+    // Need to Implement Authentication For Embedded Systems Later
+    const long long int outlet_id = body["outlet_id"].i();
+    Db::Sqlite db(Db::DatabaseFile);
+    constexpr const char *query = "SELECT STATUS FROM OUTLET WHERE ID = ?";
+    Db::Stmt stmt(query, db);
+    sqlite3_bind_int64(stmt.get(), 1, outlet_id);
+    if (sqlite3_step(stmt.get()) != SQLITE_ROW) {
+        return crow::response(
+            crow::INTERNAL_SERVER_ERROR,
+            "Internal Server Error -> Unable to Fetch Outlet Status");
+    }
+    const unsigned char *status = sqlite3_column_text(stmt.get(), 0);
+    crow::json::wvalue result;
+    result["status"] =
+        status ? reinterpret_cast<const char *>(status) : "unknown";
+    return crow::response(crow::OK, result);
+}
 } // namespace Charging

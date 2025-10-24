@@ -50,7 +50,7 @@ crow::response add_outlet(const crow::request &req) {
     }
     return crow::response(201, "Outlet added successfully");
 }
-crow::response add_user(const crow::request &req) {
+crow::response register_user(const crow::request &req) {
     crow::json::rvalue body = crow::json::load(req.body);
     if (!body || !body.has("name") || !body.has("email") ||
         !body.has("password")) {
@@ -71,7 +71,40 @@ crow::response add_user(const crow::request &req) {
     }
     return crow::response(201, "User added successfully");
 }
+crow::response login_user(const crow::request &req) {
+    crow::json::rvalue body = crow::json::load(req.body);
+    if (!body || !body.has("username") || !body.has("password")) {
+        return crow::response(crow::status::BAD_REQUEST,
+                              "Invalid request body.");
+    }
 
+    const std::string username = body["username"].s();
+    const std::string password = body["password"].s();
+
+    // In a real app, you would validate username and password against a
+    // database. For this example, we'll use a simple check.
+    long user_id = Validate::validate_user(username, password);
+    if (user_id != -1) {
+        // Create the JWT
+        auto token =
+            jwt::create()
+                .set_issuer("bit-app")
+                .set_subject(username)
+                .set_issued_at(std::chrono::system_clock::now())
+                .set_expires_at(std::chrono::system_clock::now() +
+                                std::chrono::days(30))
+                .set_payload_claim(
+                    "user_id", jwt::claim(std::string(std::to_string(user_id))))
+                .sign(jwt::algorithm::hs256{Validate::JWT_SECRET});
+
+        // Return the token to the client
+        crow::json::wvalue result;
+        result["token"] = token;
+        return crow::response(crow::status::OK, result);
+    }
+
+    return crow::response(crow::status::UNAUTHORIZED, "Invalid credentials.");
+}
 crow::response get_stations(const crow::request &req) {
     constexpr const char *query = "SELECT id, name, location FROM station";
     Db::Sqlite db(Db::DatabaseFile);
