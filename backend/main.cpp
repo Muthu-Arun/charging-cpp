@@ -1,4 +1,5 @@
 #include "crow/app.h"
+#include "crow/http_response.h"
 #include "rest/management.h"
 #include "rest/charging.h"
 void run() {
@@ -24,9 +25,27 @@ void run() {
         .methods(crow::HTTPMethod::POST)(Charging::terminate_charge);
     CROW_ROUTE(app, "/embd/outlet/status")
         .methods(crow::HTTPMethod::GET)(Charging::get_outlet_status);
+    CROW_ROUTE(app, "/").methods(crow::HTTPMethod::GET)([](){
+        crow::response res;
+        res.code = 200;
+        res.set_static_file_info("frontend/index.html");
+        return res;
+    });
+    CROW_ROUTE(app, "/<path>")
+        .methods(crow::HTTPMethod::GET)([](const crow::request &req,
+                                          const std::string &path) {
+            if(path.find("..") != std::string::npos) {
+                return crow::response(400, "Bad Request");
+            }
+            crow::response res;
+            res.code = 200;
+            res.set_static_file_info("frontend/" + path);
+            return res;
+        });
     app.port(8080).multithreaded().run();
 }
 int main() {
+    Crypt::init();
     run();
     return 0;
 }

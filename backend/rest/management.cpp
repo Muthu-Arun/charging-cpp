@@ -2,6 +2,8 @@
 #include "crow/http_response.h"
 #include "crow/json.h"
 #include "db/db.h"
+#include "utils/validate.h"
+#include <iostream>
 namespace Management {
 Station::Station(std::string_view name, std::string_view location)
     : id(-1), name(name), location(location) {}
@@ -59,19 +61,21 @@ crow::response register_user(const crow::request &req) {
     const std::string name = body["name"].s();
     const std::string email = body["email"].s();
     const std::string password = body["password"].s();
+    Crypt::hash_password(Crypt::hashed_password, password.c_str());
     constexpr const char *query =
         "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
     Db::Sqlite db(Db::DatabaseFile);
     Db::Stmt stmt(query, db);
     sqlite3_bind_text(stmt.get(), 1, name.c_str(), -1, nullptr);
     sqlite3_bind_text(stmt.get(), 2, email.c_str(), -1, nullptr);
-    sqlite3_bind_text(stmt.get(), 3, password.c_str(), -1, nullptr);
+    sqlite3_bind_text(stmt.get(), 3, Crypt::hashed_password, -1, nullptr);
     if (sqlite3_step(stmt.get()) != SQLITE_DONE) {
         return crow::response(500, "Failed to add user");
     }
     return crow::response(201, "User added successfully");
 }
 crow::response login_user(const crow::request &req) {
+    std::cout << "Debug: login_user called" << std::endl;
     crow::json::rvalue body = crow::json::load(req.body);
     if (!body || !body.has("username") || !body.has("password")) {
         return crow::response(crow::status::BAD_REQUEST,
@@ -83,7 +87,9 @@ crow::response login_user(const crow::request &req) {
 
     // In a real app, you would validate username and password against a
     // database. For this example, we'll use a simple check.
+    std::cout << "Debug: Validating user " << username << std::endl;
     long user_id = Validate::validate_user(username, password);
+    std::cout << "Debug: validate_user returned user_id " << user_id << std::endl;
     if (user_id != -1) {
         // Create the JWT
         auto token =

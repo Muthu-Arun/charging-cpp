@@ -1,4 +1,5 @@
 #include "db/db.h"
+#include <iostream>
 namespace Db {
     Sqlite::Sqlite(const char* filename) {
         if (sqlite3_open(filename, &db) != SQLITE_OK) {
@@ -29,6 +30,9 @@ namespace Db {
     Stmt::Stmt(const char* query, Sqlite& db) {
         if (sqlite3_prepare_v2(db.get(), query, -1, &stmt, nullptr) != SQLITE_OK) {
             stmt = nullptr;
+        }
+        else {
+            std::cout << "Debug: Prepared statement for query: " << query << std::endl;
         }
     }
     Stmt::~Stmt() {
