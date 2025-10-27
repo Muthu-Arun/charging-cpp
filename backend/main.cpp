@@ -18,7 +18,7 @@ void run() {
     CROW_ROUTE(app, "/api/stations")
         .methods(crow::HTTPMethod::GET)(Management::get_stations);
     CROW_ROUTE(app, "/api/outlets")
-        .methods(crow::HTTPMethod::GET)(Management::get_outlets);
+        .methods(crow::HTTPMethod::POST)(Management::get_outlets);
     CROW_ROUTE(app, "/api/charge/initiate")
         .methods(crow::HTTPMethod::POST)(Charging::initiate_charge);
     CROW_ROUTE(app, "/api/charge/terminate")

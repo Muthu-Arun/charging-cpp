@@ -130,10 +130,19 @@ crow::response get_stations(const crow::request &req) {
     return crow::response(200, result);
 }
 crow::response get_outlets(const crow::request &req) {
-    constexpr const char *query =
-        "SELECT id, station_id, name, status FROM outlet";
+    std::cout << "Debug: Executing get_outlets for station_id " << std::endl;
+    crow::json::rvalue body = crow::json::load(req.body);
+    if (!body || !body.has("station_id")) {
+        return crow::response(400, "Invalid request body");
+    
+    }
+    const long station_id = body["station_id"].i();
+     
+    static const char *query =
+        "SELECT id, station_id, name, status FROM outlet WHERE station_id = ?";
     Db::Sqlite db(Db::DatabaseFile);
     Db::Stmt stmt(query, db);
+    sqlite3_bind_int64(stmt.get(), 1, station_id);
     crow::json::wvalue::list result_list;
     crow::json::wvalue result;
     while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
@@ -145,6 +154,7 @@ crow::response get_outlets(const crow::request &req) {
         outlet["status"] =
             reinterpret_cast<const char *>(sqlite3_column_text(stmt.get(), 3));
         result_list.push_back(outlet);
+        std::cout << "Debug: Fetched outlet " <<outlet.dump() << std::endl;
     }
     result["outlets"] = std::move(result_list);
     return crow::response(200, result);

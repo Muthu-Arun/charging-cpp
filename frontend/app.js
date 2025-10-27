@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('login-btn');
     const registerBtn = document.getElementById('register-btn');
     const logoutBtn = document.getElementById('logout-btn');
-    const stationsList = document.getElementById('stations-list');
+    const stationSelect = document.getElementById('station-select');
     const outletsList = document.getElementById('outlets-list');
 
     // New tab elements
@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
         authContainer.style.display = 'none';
         chargingContainer.style.display = 'block';
         fetchStations();
-        fetchOutlets();
     };
 
     const showAuthView = () => {
@@ -28,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
         chargingContainer.style.display = 'none';
         localStorage.removeItem('token');
         token = null;
+        stationSelect.innerHTML = '';
+        outletsList.innerHTML = '';
         // Default to login tab
         loginTabBtn.click();
     };
@@ -112,19 +113,27 @@ document.addEventListener('DOMContentLoaded', () => {
              headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
-        stationsList.innerHTML = '<h3>Available Stations</h3>';
+        stationSelect.innerHTML = '<option value="">Select a Station</option>';
         data.stations.forEach(station => {
-            const stationDiv = document.createElement('div');
-            stationDiv.className = 'station';
-            stationDiv.textContent = `${station.name} - ${station.location}`;
-            stationsList.appendChild(stationDiv);
+            const option = document.createElement('option');
+            option.value = station.id;
+            option.textContent = `${station.name} - ${station.location}`;
+            stationSelect.appendChild(option);
         });
     }
 
-    async function fetchOutlets() {
-        if (!token) return;
+    async function fetchOutletsForStation(stationId) {
+        if (!token || !stationId) {
+            outletsList.innerHTML = '';
+            return;
+        }
         const response = await fetch(`${API_URL}/api/outlets`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ station_id: parseInt(stationId) })
         });
         const data = await response.json();
         outletsList.innerHTML = '<h3>Available Outlets</h3>';
@@ -132,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const outletDiv = document.createElement('div');
             outletDiv.className = 'outlet';
             outletDiv.innerHTML = `
-                <span>${outlet.name} (Station ${outlet.station_id}) - <strong>${outlet.status}</strong></span>
+                <span>${outlet.name} - <strong>${outlet.status}</strong></span>
                 <div>
                     <button class="initiate-btn" data-id="${outlet.id}" ${outlet.status !== 'available' ? 'disabled' : ''}>Start</button>
                     <button class="terminate-btn" data-id="${outlet.id}" ${outlet.status === 'available' ? 'disabled' : ''}>Stop</button>
@@ -142,11 +151,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    stationSelect.addEventListener('change', () => {
+        fetchOutletsForStation(stationSelect.value);
+    });
+
     outletsList.addEventListener('click', async (e) => {
         if (!token) return;
 
         const target = e.target;
         const outletId = target.dataset.id;
+        const stationId = stationSelect.value;
 
         if (target.classList.contains('initiate-btn')) {
             const response = await fetch(`${API_URL}/api/charge/initiate`, {
@@ -158,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ outlet_id: parseInt(outletId) })
             });
             if (response.ok) {
-                fetchOutlets();
+                fetchOutletsForStation(stationId);
             } else {
                 alert('Failed to initiate charge');
             }
@@ -174,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ outlet_id: parseInt(outletId) })
             });
             if (response.ok) {
-                fetchOutlets();
+                fetchOutletsForStation(stationId);
             } else {
                 alert('Failed to terminate charge');
             }
