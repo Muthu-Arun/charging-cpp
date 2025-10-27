@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const stationsList = document.getElementById('stations-list');
     const outletsList = document.getElementById('outlets-list');
 
+    // New tab elements
+    const loginTabBtn = document.getElementById('login-tab-btn');
+    const registerTabBtn = document.getElementById('register-tab-btn');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
     const API_URL = 'http://localhost:8080';
     let token = localStorage.getItem('token');
 
@@ -22,15 +28,39 @@ document.addEventListener('DOMContentLoaded', () => {
         chargingContainer.style.display = 'none';
         localStorage.removeItem('token');
         token = null;
+        // Default to login tab
+        loginTabBtn.click();
     };
+
+    // Tab switching logic
+    loginTabBtn.addEventListener('click', () => {
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+        loginTabBtn.classList.add('active');
+        registerTabBtn.classList.remove('active');
+    });
+
+    registerTabBtn.addEventListener('click', () => {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+        registerTabBtn.classList.add('active');
+        loginTabBtn.classList.remove('active');
+    });
 
     if (token) {
         showChargingView();
+    } else {
+        showAuthView();
     }
 
     loginBtn.addEventListener('click', async () => {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            alert('Please enter username and password.');
+            return;
+        }
 
         const response = await fetch(`${API_URL}/login/login`, {
             method: 'POST',
@@ -53,6 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('reg-email').value;
         const password = document.getElementById('reg-password').value;
 
+        if (!name || !email || !password) {
+            alert('Please fill out all fields.');
+            return;
+        }
+
         const response = await fetch(`${API_URL}/login/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -61,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
             alert('Registration successful! Please login.');
+            loginTabBtn.click(); // Switch to login tab
         } else {
             alert('Registration failed');
         }
@@ -71,9 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function fetchStations() {
-        const response = await fetch(`${API_URL}/api/stations`);
+        if (!token) return;
+        const response = await fetch(`${API_URL}/api/stations`, {
+             headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await response.json();
-        stationsList.innerHTML = '';
+        stationsList.innerHTML = '<h3>Available Stations</h3>';
         data.stations.forEach(station => {
             const stationDiv = document.createElement('div');
             stationDiv.className = 'station';
@@ -83,16 +122,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchOutlets() {
-        const response = await fetch(`${API_URL}/api/outlets`);
+        if (!token) return;
+        const response = await fetch(`${API_URL}/api/outlets`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await response.json();
-        outletsList.innerHTML = '';
+        outletsList.innerHTML = '<h3>Available Outlets</h3>';
         data.outlets.forEach(outlet => {
             const outletDiv = document.createElement('div');
             outletDiv.className = 'outlet';
             outletDiv.innerHTML = `
-                <span>${outlet.name} (Station ${outlet.station_id}) - ${outlet.status}</span>
-                <button class="initiate-btn" data-id="${outlet.id}" ${outlet.status !== 'available' ? 'disabled' : ''}>Initiate</button>
-                <button class="terminate-btn" data-id="${outlet.id}" ${outlet.status !== 'occupied' ? 'disabled' : ''}>Terminate</button>
+                <span>${outlet.name} (Station ${outlet.station_id}) - <strong>${outlet.status}</strong></span>
+                <div>
+                    <button class="initiate-btn" data-id="${outlet.id}" ${outlet.status !== 'available' ? 'disabled' : ''}>Start</button>
+                    <button class="terminate-btn" data-id="${outlet.id}" ${outlet.status === 'available' ? 'disabled' : ''}>Stop</button>
+                </div>
             `;
             outletsList.appendChild(outletDiv);
         });

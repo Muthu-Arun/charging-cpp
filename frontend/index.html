@@ -4,28 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Charging Station</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Charging Station</h1>
         <div id="auth-container">
-            <h2>Login</h2>
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
-            <button id="login-btn">Login</button>
-            <h2>Register</h2>
-            <input type="text" id="reg-name" placeholder="Name">
-            <input type="text" id="reg-email" placeholder="Email">
-            <input type="password" id="reg-password" placeholder="Password">
-            <button id="register-btn">Register</button>
+            <div class="auth-tabs">
+                <button id="login-tab-btn" class="tab-btn active">Login</button>
+                <button id="register-tab-btn" class="tab-btn">Register</button>
+            </div>
+            <div id="login-form" class="auth-form">
+                <h2>Welcome Back!</h2>
+                <input type="text" id="username" placeholder="Username" autocomplete="username">
+                <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+                <button id="login-btn">Login</button>
+            </div>
+            <div id="register-form" class="auth-form" style="display: none;">
+                <h2>Create Account</h2>
+                <input type="text" id="reg-name" placeholder="Name">
+                <input type="text" id="reg-email" placeholder="Email">
+                <input type="password" id="reg-password" placeholder="Password" autocomplete="new-password">
+                <button id="register-btn">Register</button>
+            </div>
         </div>
         <div id="charging-container" style="display: none;">
-            <h2>Stations</h2>
+            <div class="header">
+                <h2>Stations</h2>
+                <button id="logout-btn">Logout</button>
+            </div>
             <div id="stations-list"></div>
             <h2>Outlets</h2>
             <div id="outlets-list"></div>
-            <button id="logout-btn">Logout</button>
         </div>
     </div>
     <script src="app.js"></script>
