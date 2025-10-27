@@ -14,6 +14,7 @@ set(COMMON_SOURCES
     backend/utils/hash.cpp
     backend/rest/management.cpp
     backend/rest/charging.cpp
+    backend/utils/cache.cpp
 )
 
 set(COMMON_INCLUDE_DIRS
