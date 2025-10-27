@@ -1,7 +1,6 @@
 #include <map>
 #include <mutex>
 #include <set>
-#include <unordered_map>
 
 namespace Cache {
 struct SessionInfo {

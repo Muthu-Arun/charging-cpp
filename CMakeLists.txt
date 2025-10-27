@@ -31,7 +31,7 @@ target_compile_options(charging PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(charging PRIVATE sqlite3 sodium OpenSSL::SSL OpenSSL::Crypto)
 
 # Target: charging_debug
-add_executable(charging_debug backend/test/embd.cpp ${COMMON_SOURCES})
+add_executable(charging_debug backend/test/test.cpp ${COMMON_SOURCES})
 target_include_directories(charging_debug PRIVATE ${COMMON_INCLUDE_DIRS})
 target_compile_options(charging_debug PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(charging_debug PRIVATE sqlite3 sodium OpenSSL::SSL OpenSSL::Crypto)

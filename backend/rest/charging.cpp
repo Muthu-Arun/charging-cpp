@@ -12,16 +12,17 @@ crow::response initiate_charge(const crow::request &req) {
         return crow::response(crow::BAD_REQUEST, "Invalid request body");
     }
     const int user_id = Validate::get_userid_from_request(req);
+    // const int user_id = 1;
     if (user_id == -1) {
         return crow::response(crow::UNAUTHORIZED, "Unauthorized");
     }
-    const long long int outlet_id = body["outlet_id"].i();
+    const long int outlet_id = body["outlet_id"].i();
     Db::Sqlite db(Db::DatabaseFile);
     // Checking the availability of the outlet and occupying it must be in a
     // single transaction
     sqlite3_exec(db.get(), "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
     {
-        constexpr const char *query = "SELECT STATUS FROM OUTLET WHERE ID = ?";
+        static const char *query = "SELECT STATUS FROM OUTLET WHERE ID = ?";
         Db::Stmt stmt(query, db);
         sqlite3_bind_int64(stmt.get(), 1, outlet_id);
         if (sqlite3_step(stmt.get()) != SQLITE_ROW) {
@@ -33,13 +34,13 @@ crow::response initiate_charge(const crow::request &req) {
         const unsigned char *availability = sqlite3_column_text(stmt.get(), 0);
         if (std::string(availability
                             ? reinterpret_cast<const char *>(availability)
-                            : "") != "ROLLBACK") {
+                            : "") != "available") {
             sqlite3_exec(db.get(), "", nullptr, nullptr, nullptr);
             return crow::response(crow::CONFLICT, "Outlet Not Available");
         }
     }
 
-    constexpr const char *query =
+    static const char *query =
         "UPDATE OUTLET SET STATUS = 'occupied' WHERE ID = ?";
     Db::Stmt stmt(query, db);
     sqlite3_bind_int(stmt.get(), 1, outlet_id);
@@ -57,12 +58,13 @@ crow::response terminate_charge(const crow::request &req) {
         return crow::response(crow::BAD_REQUEST, "Invalid request body");
     }
     const int user_id = Validate::get_userid_from_request(req);
+    // const int user_id = 1;
     if (user_id == -1) {
         return crow::response(crow::UNAUTHORIZED, "Unauthorized Request");
     }
-    const long long int outlet_id = body["outlet_id"].i();
+    const long int outlet_id = body["outlet_id"].i();
     Db::Sqlite db(Db::DatabaseFile);
-    constexpr const char *query =
+    static const char *query =
         "UPDATE OUTLET SET STATUS = 'available' WHERE ID = ?";
     Db::Stmt stmt(query, db);
     sqlite3_bind_int64(stmt.get(), 1, outlet_id);
@@ -78,9 +80,9 @@ crow::response get_outlet_status(const crow::request &req) {
         return crow::response(crow::BAD_REQUEST, "Invalid request body");
     }
     // Need to Implement Authentication For Embedded Systems Later
-    const long long int outlet_id = body["outlet_id"].i();
+    const long int outlet_id = body["outlet_id"].i();
     Db::Sqlite db(Db::DatabaseFile);
-    constexpr const char *query = "SELECT STATUS FROM OUTLET WHERE ID = ?";
+    static const char *query = "SELECT STATUS FROM OUTLET WHERE ID = ?";
     Db::Stmt stmt(query, db);
     sqlite3_bind_int64(stmt.get(), 1, outlet_id);
     if (sqlite3_step(stmt.get()) != SQLITE_ROW) {
