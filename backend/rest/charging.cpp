@@ -3,6 +3,8 @@
 #include "crow/http_request.h"
 #include "crow/http_response.h"
 #include "db/db.h"
+#include "utils/cache.h"
+#include <iostream>
 #include <string>
 
 namespace Charging {
@@ -11,6 +13,7 @@ crow::response initiate_charge(const crow::request &req) {
     if (!body || !body.has("outlet_id")) {
         return crow::response(crow::BAD_REQUEST, "Invalid request body");
     }
+
     const int user_id = Validate::get_userid_from_request(req);
     // const int user_id = 1;
     if (user_id == -1) {
@@ -46,6 +49,7 @@ crow::response initiate_charge(const crow::request &req) {
     sqlite3_bind_int(stmt.get(), 1, outlet_id);
     if (sqlite3_step(stmt.get()) == SQLITE_DONE) {
         sqlite3_exec(db.get(), "END TRANSACTION", nullptr, nullptr, nullptr);
+        Cache::create_session(user_id, outlet_id);
         return crow::response(crow::OK, "Charge initiated successfully");
     }
     sqlite3_exec(db.get(), "END TRANSACTION", nullptr, nullptr, nullptr);
@@ -57,12 +61,19 @@ crow::response terminate_charge(const crow::request &req) {
     if (!body || !body.has("outlet_id")) {
         return crow::response(crow::BAD_REQUEST, "Invalid request body");
     }
+
     const int user_id = Validate::get_userid_from_request(req);
-    // const int user_id = 1;
+    const long int outlet_id = body["outlet_id"].i();
+
     if (user_id == -1) {
         return crow::response(crow::UNAUTHORIZED, "Unauthorized Request");
     }
-    const long int outlet_id = body["outlet_id"].i();
+    if (!Cache::session_exists(user_id, outlet_id)) {
+        std::cout << "No Active Session Found for User ID: " << user_id
+                  << " and Outlet ID: " << outlet_id << std::endl;
+        return crow::response(crow::FORBIDDEN,
+                              "Forbidden Request -> No Active Session Found");
+    }
     Db::Sqlite db(Db::DatabaseFile);
     static const char *query =
         "UPDATE OUTLET SET STATUS = 'available' WHERE ID = ?";
@@ -72,6 +83,7 @@ crow::response terminate_charge(const crow::request &req) {
         return crow::response(crow::INTERNAL_SERVER_ERROR,
                               "Internal Server Error -> Unable to Free Outlet");
     }
+    Cache::delete_session(user_id, outlet_id);
     return crow::response(crow::OK, "Charging terminated successfully");
 }
 crow::response get_outlet_status(const crow::request &req) {
