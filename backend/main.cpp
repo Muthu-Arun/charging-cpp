@@ -47,5 +47,6 @@ void run() {
 int main() {
     Crypt::init();
     run();
+    Charging::free_outlets();
     return 0;
 }

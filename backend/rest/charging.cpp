@@ -108,4 +108,17 @@ crow::response get_outlet_status(const crow::request &req) {
         status ? reinterpret_cast<const char *>(status) : "unknown";
     return crow::response(crow::OK, result);
 }
+
+void free_outlets() {
+    Db::Sqlite db(Db::DatabaseFile);
+    static const char *query =
+        "UPDATE OUTLET SET STATUS = 'available' WHERE STATUS = 'occupied'";
+    Db::Stmt stmt(query, db);
+    if (sqlite3_step(stmt.get()) != SQLITE_DONE) {
+        std::cerr << "Error freeing occupied outlets: "
+                  << sqlite3_errmsg(db.get()) << std::endl;
+    } else {
+        std::cout << "All occupied outlets have been freed." << std::endl;
+    }
+}
 } // namespace Charging
