@@ -24,7 +24,7 @@ void run() {
     CROW_ROUTE(app, "/api/charge/terminate")
         .methods(crow::HTTPMethod::POST)(Charging::terminate_charge);
     CROW_ROUTE(app, "/embd/outlet/status")
-        .methods(crow::HTTPMethod::GET)(Charging::get_outlet_status);
+        .methods(crow::HTTPMethod::POST)(Charging::get_outlet_status);
     CROW_ROUTE(app, "/").methods(crow::HTTPMethod::GET)([](){
         crow::response res;
         res.code = 200;

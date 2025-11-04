@@ -25,7 +25,7 @@ int my_outlet_id = 123;
 // --- END: UPDATE THESE VALUES ---
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("Booting...");
 
   // Connect to WiFi
