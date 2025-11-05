@@ -1,9 +1,19 @@
 #include "crow/app.h"
 #include "crow/http_response.h"
-#include "rest/management.h"
+#include "crow/middlewares/cors.h"
 #include "rest/charging.h"
+#include "rest/management.h"
 void run() {
-    crow::SimpleApp app;
+    crow::App<crow::CORSHandler> app;
+
+    // Configure Global CORS Rules
+    auto &cors = app.get_middleware<crow::CORSHandler>();
+    cors.global()
+        .origin("*") // Use .origin()
+        .allow_credentials()
+        .headers("Accept", "Origin", "Content-Type", "Authorization")
+        .methods(crow::HTTPMethod::GET, crow::HTTPMethod::POST,
+                 crow::HTTPMethod::OPTIONS);
     CROW_ROUTE(app, "/app/health").methods(crow::HTTPMethod::GET)([]() {
         return crow::response(200, "Service is Healthy");
     });
@@ -25,23 +35,23 @@ void run() {
         .methods(crow::HTTPMethod::POST)(Charging::terminate_charge);
     CROW_ROUTE(app, "/embd/outlet/status")
         .methods(crow::HTTPMethod::POST)(Charging::get_outlet_status);
-    CROW_ROUTE(app, "/").methods(crow::HTTPMethod::GET)([](){
+    CROW_ROUTE(app, "/").methods(crow::HTTPMethod::GET)([]() {
         crow::response res;
         res.code = 200;
         res.set_static_file_info("frontend/index.html");
         return res;
     });
     CROW_ROUTE(app, "/<path>")
-        .methods(crow::HTTPMethod::GET)([](const crow::request &req,
-                                          const std::string &path) {
-            if(path.find("..") != std::string::npos) {
-                return crow::response(400, "Bad Request");
-            }
-            crow::response res;
-            res.code = 200;
-            res.set_static_file_info("frontend/" + path);
-            return res;
-        });
+        .methods(crow::HTTPMethod::GET)(
+            [](const crow::request &req, const std::string &path) {
+                if (path.find("..") != std::string::npos) {
+                    return crow::response(400, "Bad Request");
+                }
+                crow::response res;
+                res.code = 200;
+                res.set_static_file_info("frontend/" + path);
+                return res;
+            });
     app.port(8080).multithreaded().run();
 }
 int main() {
