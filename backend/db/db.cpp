@@ -48,9 +48,9 @@ namespace Db {
     }
     Stmt& Stmt::operator=(Stmt&& other) noexcept {
         if (this != &other) {
-            if (stmt) {
-                sqlite3_finalize(stmt);
-            }
+            // if (stmt) {
+            //     sqlite3_finalize(stmt);
+            // }
             stmt = other.stmt;
             other.stmt = nullptr;
         }

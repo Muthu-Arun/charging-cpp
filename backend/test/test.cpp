@@ -1,5 +1,6 @@
 #include "crow/http_request.h"
 #include "crow/json.h"
+#include "db/db.h"
 #include "rest/charging.h"
 static void test_initiate_charge(){
     crow::request req;
@@ -20,7 +21,11 @@ static void test_terminate_charge(){
 
 }
 int main(){
+    Db::DatabaseFile = "/workspaces/charging/charging-cpp/database/user.db";
     test_initiate_charge();
     test_terminate_charge();
+    std::string username = "testuser";
+    std::string password = "testpassword";
+    long user_id = Validate::validate_user(username, password);
 
 }

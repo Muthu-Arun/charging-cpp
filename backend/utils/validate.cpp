@@ -32,13 +32,17 @@ long validate_user(const std::string &username, const std::string &password) {
     Db::Stmt stmt;
     static const char *query_email =
         "SELECT id, password FROM user where email = ?";
-    static const char *query =
-        "SELECT id, password FROM user WHERE name = ?";
+    static const char *query = "SELECT id, password FROM user WHERE name = ?";
     if (username.find('@') == std::string::npos)
         stmt = Db::Stmt(query, db);
     else
         stmt = Db::Stmt(query_email, db);
-    sqlite3_bind_text(stmt.get(), 1, username.c_str(), -1, SQLITE_TRANSIENT);
+    std::cout << "Debug: Preparing to bind username: " << username
+              << std::endl;
+    std::cout << "Debug: Preparing to bind username: " << username << " "
+              << sqlite3_bind_text(stmt.get(), 1, username.c_str(), -1,
+                                   SQLITE_TRANSIENT)
+              << std::endl;
     int rc = sqlite3_step(stmt.get());
     std::cout << "Debug: SQLite step returned code " << rc << std::endl;
     if (rc == SQLITE_ROW) {
@@ -46,10 +50,11 @@ long validate_user(const std::string &username, const std::string &password) {
                                                             // the first column
         const unsigned char *actual_password_uc =
             sqlite3_column_text(stmt.get(), 1);
-        std::string actual_password = actual_password_uc
-                                          ? reinterpret_cast<const char *>(
-                                                actual_password_uc)
-                                          : "";
+        if (actual_password_uc == nullptr) {
+            return -1;
+        }
+        std::string actual_password =
+            reinterpret_cast<const char *>(actual_password_uc);
 
         if (!Crypt::verify_hash(actual_password.c_str(), password.c_str())) {
             return -1;
