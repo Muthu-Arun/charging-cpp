@@ -61,14 +61,15 @@ crow::response register_user(const crow::request &req) {
     const std::string name = body["name"].s();
     const std::string email = body["email"].s();
     const std::string password = body["password"].s();
-    Crypt::hash_password(Crypt::hashed_password, password.c_str());
+    char hashed_password[crypto_pwhash_STRBYTES];
+    Crypt::hash_password(hashed_password, password.c_str());
     constexpr const char *query =
         "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
     Db::Sqlite db(Db::DatabaseFile);
     Db::Stmt stmt(query, db);
     sqlite3_bind_text(stmt.get(), 1, name.c_str(), -1, nullptr);
     sqlite3_bind_text(stmt.get(), 2, email.c_str(), -1, nullptr);
-    sqlite3_bind_text(stmt.get(), 3, Crypt::hashed_password, -1, nullptr);
+    sqlite3_bind_text(stmt.get(), 3, hashed_password, -1, nullptr);
     if (sqlite3_step(stmt.get()) != SQLITE_DONE) {
         return crow::response(500, "Failed to add user");
     }
@@ -112,7 +113,7 @@ crow::response login_user(const crow::request &req) {
     return crow::response(crow::status::UNAUTHORIZED, "Invalid credentials.");
 }
 crow::response get_stations(const crow::request &req) {
-    constexpr const char *query = "SELECT id, name, location FROM station";
+    static const char *query = "SELECT id, name, location FROM station";
     Db::Sqlite db(Db::DatabaseFile);
     Db::Stmt stmt(query, db);
     crow::json::wvalue::list result_list;
