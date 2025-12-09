@@ -55,18 +55,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loginBtn.addEventListener('click', async () => {
-        const username = document.getElementById('username').value;
+        const email = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
-        if (!username || !password) {
+        if (!email || !password) {
             alert('Please enter username and password.');
             return;
         }
 
-        const response = await fetch(`${API_URL}/login/login`, {
+        const response = await fetch(`${API_URL}/user/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ email, password })
         });
 
         if (response.ok) {
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const response = await fetch(`${API_URL}/login/register`, {
+        const response = await fetch(`${API_URL}/user/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password })

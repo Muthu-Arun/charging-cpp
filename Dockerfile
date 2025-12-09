@@ -5,6 +5,6 @@ RUN apt update && apt install -y build-essential sqlite3 libsqlite3-dev libsodiu
 
 COPY . .
 
-RUN  cd build && cmake .. && cd .. && cmake --build build --config Release -- 
+RUN  mkdir build && cd build && cmake .. && cd .. && cmake --build build --config Release -- 
 
 CMD ["./build/charging"]

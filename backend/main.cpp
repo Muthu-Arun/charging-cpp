@@ -6,14 +6,6 @@
 void run() {
     crow::App<crow::CORSHandler> app;
 
-    // Configure Global CORS Rules
-    auto &cors = app.get_middleware<crow::CORSHandler>();
-    cors.global()
-        .origin("*") // Use .origin()
-        .allow_credentials()
-        .headers("Accept", "Origin", "Content-Type", "Authorization")
-        .methods(crow::HTTPMethod::GET, crow::HTTPMethod::POST,
-                 crow::HTTPMethod::OPTIONS);
     CROW_ROUTE(app, "/app/health").methods(crow::HTTPMethod::GET)([]() {
         return crow::response(200, "Service is Healthy");
     });
@@ -21,9 +13,9 @@ void run() {
         .methods(crow::HTTPMethod::POST)(Management::add_outlet);
     CROW_ROUTE(app, "/admin/add_station")
         .methods(crow::HTTPMethod::POST)(Management::add_station);
-    CROW_ROUTE(app, "/login/register")
+    CROW_ROUTE(app, "/user/register")
         .methods(crow::HTTPMethod::POST)(Management::register_user);
-    CROW_ROUTE(app, "/login/login")
+    CROW_ROUTE(app, "/user/login")
         .methods(crow::HTTPMethod::POST)(Management::login_user);
     CROW_ROUTE(app, "/api/stations")
         .methods(crow::HTTPMethod::GET)(Management::get_stations);
