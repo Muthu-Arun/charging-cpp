@@ -1,4 +1,4 @@
-# Charging C++ Backend
+# EV Charging Infra Backend - Just a small experiment.
 
 This project is a C++ backend service for managing and operating a network of electric vehicle (EV) charging stations. It provides a RESTful API for administrative tasks and for users to control charging sessions.
 
